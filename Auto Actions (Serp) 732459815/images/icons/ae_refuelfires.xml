@@ -1,0 +1,9 @@
+<Atlas>
+  <Texture filename="ae_refuelfires.tex" />
+  <Elements>
+    <Element name="no.tex" u1="0.001953125" u2="0.7792969" v1="0.8056641" v2="0.9990234" />
+    <Element name="yes_-_logs.tex" u1="0.001953125" u2="0.7792969" v1="0.6103516" v2="0.8037109" />
+    <Element name="yes_-_twigs.tex" u1="0.001953125" u2="0.7792969" v1="0.4150391" v2="0.6083984" />
+    <Element name="yes_-_grass.tex" u1="0.001953125" u2="0.7792969" v1="0.2197266" v2="0.4130859" />
+  </Elements>
+</Atlas>

@@ -1,0 +1,9 @@
+> Overwrite action restrictions with (CTRL + Space)
+> Equip weapon at combat
+> Automatically craft tools? - Make gold tools?
+> Auto re-plant trees?
+> Ignore saplings completely?
+> Use boomerang on critters?
+> (B) Re-fuel fires with right-click?
+> (B) Repair walls with right-click?
+> (B) Make light in the dark?

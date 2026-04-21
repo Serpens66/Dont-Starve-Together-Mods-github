@@ -1,0 +1,7 @@
+<Atlas>
+  <Texture filename="ae_enablemod.tex" />
+  <Elements>
+    <Element name="no.tex" u1="0.001953125" u2="0.7792969" v1="0.6113281" v2="0.9980469" />
+    <Element name="yes.tex" u1="0.001953125" u2="0.7792969" v1="0.2207031" v2="0.6074219" />
+  </Elements>
+</Atlas>

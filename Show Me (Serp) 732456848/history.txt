@@ -1,0 +1,54 @@
+v0.16
+- Added Traditional Chinese (by Skull).
+
+v0.151
+- Removed spam from log.txt
+
+v0.15
+- Added Brazilian Portuguese language. Thanks to Salsa.
+- Added estimation of spoilage.
+
+v0.14
+- Fixed compatibility with outdated DST Freezer mod. Don't use it despite compatibility.
+- Fixed inspection of finiteuses component. Thanks Skull.
+- Translated food tags (Chinese). Thanks Skull.
+
+v0.13
+- Added possibility to translate food tags to any language.
+- Translated food tags (Russian).
+- Changed icon. Added informative screen-shot to Steam. Thanks Foxy the cunning fox.
+- Added temperature info for Heat Rock.
+- Added support of Combined Status on client side.
+- Celsius is used everywhere in the mod.
+
+v0.12
+- Fixed rare crash. Possible Klei bug:
+http://forums.kleientertainment.com/klei-bug-tracker/dont-starve-together/random-mod-system-bug-r1062/
+
+v0.10
+- Passed Klei bug.
+
+v0.09
+- Fixed Chinese Language.
+
+v0.08
+- Added language: Simplified Chinese.
+- Added some Russian strings.
+- Fixed "+" sign in character's sanity.
+
+v0.07
+- Added perish info.
+- Fixed inventory bar interface offset.
+- Added support of inst.is_admin variable for GMs in custom game mode.
+- Disabled info for ThePlayer.
+
+v0.06
+- Minor fix.
+
+v0.05
+- Fixed some typo.
+- Improved traffic optimization.
+- Added many language support (without translation yet).
+- Added Russian support.
+- Added beefalo obedience.
+

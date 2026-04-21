@@ -1,0 +1,618 @@
+
+local helpers = {}
+
+
+-- #################################################
+------------------ Technical Helpers --------------------
+-- #################################################
+
+--  custom listenforevent, puts our function at the beginning of the list of fns to execute (instead of at the end)
+local function AddListener(t, event, inst, fn)
+    local listeners = t[event]
+    if not listeners then
+        listeners = {}
+        t[event] = listeners
+    end
+    local listener_fns = listeners[inst]
+    if not listener_fns then
+        listener_fns = {}
+        listeners[inst] = listener_fns
+    end
+    table.insert(listener_fns, 1, fn) -- put it on the first position
+end
+local function MyListenForEventPutinFirst(self, event, fn, source)
+    source = source or self
+    if not source.event_listeners then
+        source.event_listeners = {}
+    end
+    AddListener(source.event_listeners, event, self, fn)
+    if not self.event_listening then
+        self.event_listening = {}
+    end
+    AddListener(self.event_listening, event, source, fn)
+end
+helpers["MyListenForEventPutinFirst"] = MyListenForEventPutinFirst
+
+
+local function removetablekey(t, lookup_key)
+    for k, v in pairs(t) do
+        if k == lookup_key then
+            t[k] = nil
+            return v
+        end
+    end
+end
+helpers["removetablekey"] = removetablekey
+
+
+local function nroot(num,root)
+  return num^(1/root)
+end
+helpers["nroot"] = nroot
+
+
+-- arrays: Return the first index with the given value (or nil if not found).
+local function indexOf(array, value)
+    for i, v in ipairs(array) do
+        if v == value then
+            return i
+        end
+    end
+    return nil
+end
+helpers["indexOf"] = indexOf
+
+-- #################################################
+------------------ Game Helpers Get Info --------------------
+-- #################################################
+
+local _T = TUNING
+
+
+local function GetMyEquippedItem(inst,equipslot)
+    local item = nil
+    if inst~=nil and inst:IsValid() and inst.components~=nil and inst.components.inventory~=nil then
+        item = inst.components.inventory:GetEquippedItem(equipslot)
+    end
+    return item
+end
+helpers["GetMyEquippedItem"] = GetMyEquippedItem
+
+local function GetLeader(inst,frombrain)
+    if frombrain==true and helpers.GetLeashPosition(inst)~=nil then
+        -- if _T.BM_dodebugprints then print("no leader to follow") end
+        return nil -- no leader to follow or face
+    end
+    return inst.components.follower.leader
+end
+helpers["GetLeader"] = GetLeader
+local function IsNearLeader(inst, dist,frombrain,target)
+    local BM_stayatposition = helpers.GetLeashPosition(inst) -- checks inst.BM_staywalkableplattform and inst.BM_stayatposition
+    if frombrain==true and BM_stayatposition~=nil then -- check if near to stay position instead
+        if target~=nil then -- check if target is near
+            return target:GetDistanceSqToPoint(BM_stayatposition) < dist * dist
+        else -- check if shadow is near
+            return inst:GetDistanceSqToPoint(BM_stayatposition) < dist * dist
+        end
+    end
+    local leader = GetLeader(inst)
+    if target~=nil then -- check if target is near leader
+        return leader ~= nil and target:IsNear(leader, dist)
+    else -- check if shadow is near leader
+        return leader ~= nil and inst:IsNear(leader, dist)
+    end
+end
+helpers["IsNearLeader"] = IsNearLeader
+
+local function GetLeashPosition(inst)
+    if inst.BM_staywalkableplattform~=nil and inst.BM_staywalkableplattform:IsValid() then
+        return inst.BM_staywalkableplattform:GetPosition()
+    else
+        return inst.BM_stayatposition
+    end
+end
+helpers["GetLeashPosition"] = GetLeashPosition
+
+local function isshadowworker(prefab,_builder) -- dont want to add a new prefab for this, so lumber is changed to worker instead
+    return not _builder and prefab=="shadowlumber" or (_builder==true and prefab=="shadowlumber_builder") -- 
+end
+helpers["isshadowworker"] = isshadowworker
+
+
+local function CanToolDoAction(item,job,clientcheck)
+    if item~=nil then
+        if clientcheck then
+            return item:HasTag(job.id.."_tool") or ((job==ACTIONS.PICK or job==ACTIONS.PICKUP or job==ACTIONS.HARVEST) and item.prefab=="pitchfork") or job==ACTIONS.INTERACT_WITH -- CanDoAction does not work well on client, at least not for pitchforks inherent action, so avoid it here
+        else
+            return (item.components~=nil and item.components.tool~=nil and item.components.tool:CanDoAction(job)) or item:CanDoAction(job) or ((job==ACTIONS.PICK or job==ACTIONS.PICKUP or job==ACTIONS.HARVEST) and item:CanDoAction(ACTIONS.TERRAFORM)) or job==ACTIONS.INTERACT_WITH
+        end
+    end
+    return false
+end
+helpers["CanToolDoAction"] = CanToolDoAction
+
+local function CanAllrounderDoThis(inst,job,withcontainer) -- if allrounder worker is currently a lumber, miner, digger oder collector. withcontainer true -> does not only check equipped tool, but also container for tools.
+    if inst~=nil and inst.components.shadowtoggleable~=nil and inst.components.shadowtoggleable:IsActive() and inst.components.container~=nil and not inst.components.container:IsOpen() and inst.components.health~=nil and not inst.components.health:IsDead() and inst.willdespawn~=true then
+        if inst~=nil and isshadowworker(inst.prefab) then
+            local item = helpers.GetMyEquippedItem(inst,EQUIPSLOTS.HANDS) -- equipped item is not in container, so extra check for this one
+            if item~=nil and CanToolDoAction(item,job) then -- pitchfork for picking stuff
+                return true
+            end
+            if withcontainer then -- also check container for tools for requested job
+                for i = 1, inst.components.container:GetNumSlots() do
+                    item = inst.components.container:GetItemInSlot(i)
+                    if item~=nil and item:IsValid() and item.components~=nil and item.components.equippable~=nil then
+                        if item.components.equippable.equipslot == EQUIPSLOTS.HANDS then
+                            if CanToolDoAction(item,job) then
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+            
+        end
+    end
+    return false
+end
+helpers["CanAllrounderDoThis"] = CanAllrounderDoThis
+
+local function IsAllowedItem(inst,item,containerORequip,slot) -- hardcoded no slot 1 for worker container
+    
+    local all_duelist = _T.BM_ALLINTOINVENTORY=="duelist" or _T.BM_ALLINTOINVENTORY=="duelistworker" or false
+    local all_worker = _T.BM_ALLINTOINVENTORY=="worker" or _T.BM_ALLINTOINVENTORY=="duelistworker" or false
+    if inst.prefab=="shadowduelist" then
+        if containerORequip=="container" then -- slot does not matter for duelist, since he does not pick things
+            if table.contains(_T.BM_AllowedItemsInContainer.duelistNoequip.prefabs,item.prefab) or all_duelist then  -- eg codex umbra
+                return true
+            end           
+            for _,tag in ipairs(_T.BM_AllowedItemsInContainer.duelistNoequip.tags) do
+                if item:HasTag(tag) then
+                    return true
+                end
+            end
+        end
+        if containerORequip=="container" or containerORequip=="equip" then -- is executed for both, container and equip
+            if table.contains(_T.BM_AllowedItemsInContainer.duelistequip.prefabs,item.prefab) then
+                return true
+            end           
+            for _,tag in ipairs(_T.BM_AllowedItemsInContainer.duelistequip.tags) do
+                if item:HasTag(tag) then
+                    return true
+                end
+            end
+        end
+    elseif helpers.isshadowworker(inst.prefab) then
+        if containerORequip=="container" and slot~=1 then -- things the sowkrer should not equip, should not be put into slot 1. it is reserved for the worker tool (otehrwise worker will have problems picking items) then
+            if table.contains(_T.BM_AllowedItemsInContainer.workerNoequip.prefabs,item.prefab) or all_worker then -- eg codex umbra
+                return true
+            end           
+            for _,tag in ipairs(_T.BM_AllowedItemsInContainer.workerNoequip.tags) do
+                if item:HasTag(tag) then
+                    return true
+                end
+            end
+        end
+        if containerORequip=="container" or containerORequip=="equip" then -- is executed for both, container and equip
+            if table.contains(_T.BM_AllowedItemsInContainer.workerequip.prefabs,item.prefab) then -- eg umbrella
+                return true
+            end           
+            for _,tag in ipairs(_T.BM_AllowedItemsInContainer.workerequip.tags) do -- eg lightsources like lantern or torch, to help the player see in the night
+                if item:HasTag(tag) then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+helpers["IsAllowedItem"] = IsAllowedItem
+
+local function ContainerShouldAcceptItem(self,item, slot) -- has to work for server and client
+    if self.inst~=nil and ((self.inst.components.health~=nil and not self.inst.components.health:IsDead()) or (self.inst.replica.health~=nil and not self.inst.replica.health:IsDead())) and self.inst.willdespawn~=true then
+        local prefab = self.inst.prefab
+        if item~=nil then
+            if item.prefab=="nightmarefuel" and (not helpers.isshadowworker(prefab) or slot~=1) then -- always allow nightmarefuel
+                return true
+            elseif prefab=="shadowduelist" then
+                if ((item.components~=nil and item.components.equippable~=nil) or (item.replica~=nil and item.replica.equippable~=nil)) and (item:HasTag("weapon") or item:HasTag("armor")) then -- only armor (also hats with armor) and weapons
+                    return true
+                end
+                if IsAllowedItem(self.inst,item,"container",slot) then
+                    return true
+                end
+            elseif helpers.isshadowworker(prefab) then
+                if slot~=1 and item:HasTag("shadowincontainer") then -- picked stuff has this tag temporarily
+                    return true
+                end
+                if ((item.components~=nil and item.components.equippable~=nil) or (item.replica~=nil and item.replica.equippable~=nil)) then
+                    for _,job in ipairs(_T.BM_SHADOW_JOBS) do
+                        if CanToolDoAction(item,job,true) then -- clientcheck true
+                            return true
+                        end
+                    end
+                end  
+                if IsAllowedItem(self.inst,item,"container",slot) then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+helpers["ContainerShouldAcceptItem"] = ContainerShouldAcceptItem
+
+local function ShouldKite(target, inst)
+    -- if _T.BM_dodebugprints then print("shouldkite "..tostring(target).." , "..tostring(inst)) end 
+    if _T.BM_SWITCHOPTION_FIGHTER ~= nil then
+        if _T.BM_SWITCHOPTION_FIGHTER == "tank" then
+            return false
+        end
+        if _T.BM_SWITCHOPTION_FIGHTER == "tactic" and (inst.components.inventory and inst.components.inventory:IsWearingArmor()==true) then
+            return false
+        end
+    end
+    if target=="ignore" then -- if we dont have a target (eg we only check if we chould change attack speed)
+        return true
+    else
+        return inst.components.combat:TargetIs(target) -- orignal code
+            and target.components.health ~= nil
+            and not target.components.health:IsDead()
+    end
+end
+helpers["ShouldKite"] = ShouldKite
+
+
+local function CalcDamage(self, weapon) -- copy of the combat function, without the need of an target
+    local basedamage
+    local basemultiplier = self.damagemultiplier
+    local externaldamagemultipliers = self.externaldamagemultipliers
+    local bonus = self.damagebonus --not affected by multipliers
+    local playermultiplier = 1
+    if weapon ~= nil then
+        --No playermultiplier when using weapons
+        basedamage = weapon.components.weapon.damage or 0
+        playermultiplier = 1
+    else
+        basedamage = self.defaultdamage
+        playermultiplier = playermultiplier and self.playerdamagepercent or 1
+    end
+    return basedamage
+        * (basemultiplier or 1)
+        * self.externaldamagemultipliers:Get()
+        * playermultiplier
+        + (bonus or 0)
+end
+helpers["CalcDamage"] = CalcDamage
+
+
+
+-- #################################################
+------------------ Game Helpers Set Info --------------------
+-- #################################################
+
+--[[ -- no longer needed cause we use externaldamagemultipliers now instead of changing weapon damage
+-- sahdows with weapons should deal their base damage + weapon damage, instead of only weapon damge -> increase damage of weapon
+local function MakeNewDamage(item) -- add the default duelist damage to the weapon, so it actually makes more damage
+    if item~=nil and item.components~=nil and item.components.weapon~= nil and item.components.weapon.oldWdamage==nil then -- if it is useable as weapon, increase its damage by the default damage (otherwise we could end up with less damage than default by using a weapon)
+        local olddamge = item.components.weapon.damage
+        if _T.BM_dodebugprints then
+            print("set new damage "..tostring(item).."old: "..tostring(olddamge)..", new: "..tostring(olddamge+_T.SHADOWWAXWELL_DAMAGE))
+        end
+        item.components.weapon:SetDamage(olddamge+_T.SHADOWWAXWELL_DAMAGE)
+        item.components.weapon.oldWdamage = olddamge -- save it in weapon. on loading this but also the new set damage are resettet, so no problem here. save this AFTER the SetDamage function, to circumvent our hambat blcoking
+    end
+end
+helpers["MakeNewDamage"] = MakeNewDamage
+local function RestoreOldDamage(item)
+    if item~=nil and item.components~=nil and item.components.weapon~=nil and item.components.weapon.oldWdamage~=nil then
+        if _T.BM_dodebugprints then
+            print("restore old damage "..tostring(item).." : "..tostring(item.components.weapon.oldWdamage))
+        end
+        local olddamage = item.components.weapon.oldWdamage
+        item.components.weapon.oldWdamage = nil -- setting it nil before calling setdamage to circumvent our hambat protection
+        item.components.weapon:SetDamage(olddamage)
+    end
+end
+helpers["RestoreOldDamage"] = RestoreOldDamage
+]]
+
+
+
+local function tryconsume(self, v, amount) -- copy pasted from container component
+    if v.components.stackable == nil then
+        self:RemoveItem(v):Remove()
+        return 1
+    elseif v.components.stackable.stacksize > amount then
+        v.components.stackable:SetStackSize(v.components.stackable.stacksize - amount)
+        return amount
+    else
+        amount = v.components.stackable.stacksize
+        self:RemoveItem(v, true):Remove()
+        return amount
+    end
+    --shouldn't be possible?
+    return 0
+end
+
+local function Findandconsume_prefab(inst,amount,prefab,onlyfind) -- tries to consume amount nightmarefuel from his container and returns the actual amount consumed
+    local totalconsumed = 0 -- total consumed amount
+    if onlyfind==nil then -- container:ConsumeByName unfortunately does not return how much was consumed, otherwise we could simply use it... instead we will copy is mostly
+        if amount > 0 then
+            local consumed = 0 -- consumed amount per slot
+            for k, item in pairs(inst.components.container.slots) do -- code slightly adjusted from ConsumeByName to save totalconsumed
+                consumed = 0
+                if item~=nil and item:IsValid() and item.prefab == prefab then
+                    consumed = tryconsume(inst.components.container, item, amount)
+                    totalconsumed = totalconsumed + consumed
+                    amount = amount - consumed
+                    if amount <= 0 then
+                        break
+                    end
+                end
+            end
+        end
+        return totalconsumed
+    elseif onlyfind=="onlyfind" then
+        return inst.components.container:Has(prefab,amount)
+    elseif onlyfind=="findstackspace" then
+        for k, item in pairs(inst.components.container.slots) do -- only loops over filled slots this way
+            if item~=nil and item:IsValid() and item.prefab==prefab and item.components.stackable~=nil and not item.components.stackable:IsFull() then
+                return item -- find a stack that is not full already
+            end
+        end
+    end
+    return false
+    -- if amount>0 then -- old code
+        -- for i = 1, inst.components.container:GetNumSlots() do
+            -- item = inst.components.container:GetItemInSlot(i)
+            -- if item~=nil and item:IsValid() and item.prefab==prefab then                
+                -- if onlyfind=="onlyfind" then
+                    -- return item
+                -- end
+                -- if item.components.stackable~=nil and item.components.stackable:IsStack() then -- is a stack
+                    -- if onlyfind==nil then
+                        -- while fuelconsumed<amount and item.components.stackable:StackSize() >= 1 and item:IsValid() do
+                            -- fuelconsumed = fuelconsumed + 1
+                            -- if item.components.stackable:StackSize()==1 then
+                                -- inst.components.container:RemoveItem(item):Remove() -- remove the last one
+                            -- else
+                                -- item.components.stackable:SetStackSize(item.components.stackable:StackSize() - 1) -- reduce the stacksize
+                            -- end
+                        -- end
+                    -- elseif onlyfind=="findstackspace" and not item.components.stackable:IsFull() then
+                        -- return item -- find a stack that is not full already
+                    -- end
+                -- elseif onlyfind==nil then -- is no stack 
+                    -- fuelconsumed = fuelconsumed + 1
+                    -- inst.components.container:RemoveItem(item):Remove()
+                -- elseif item.components.stackable~=nil and onlyfind=="findstackspace" and not item.components.stackable:IsFull() then -- without "IsStack" because 1 cutgrass is no stack, but stackable
+                    -- return item -- find a stack that is not full already
+                -- end
+            -- end
+        -- end
+    -- end
+    -- if onlyfind==nil then
+        -- return fuelconsumed
+    -- else
+        -- return false
+    -- end
+end
+helpers["Findandconsume_prefab"] = Findandconsume_prefab
+
+
+local function check_attackspeed_kite(inst,force)
+    if inst.prefab=="shadowduelist" and (_T.BM_SWITCHOPTION_FIGHTER == "tactic" or force==true) then -- we may got an armor, so check should kite again and adjust attackperiod
+        if helpers.ShouldKite("ignore",inst) then -- change attack speed to match the set stop_kiting_distance, so it actually can switch from tank to kite when loosig his armor, without low attack speed on tank
+            local speed = inst.components.locomotor:GetRunSpeed() -- is distance per second
+            local new_Attack_period = _T.BM_STOP_KITING_DIST / speed + 1.2
+            inst.components.combat:SetAttackPeriod(new_Attack_period)
+            if _T.BM_dodebugprints then
+                print("shouldkite, change attack speed now to "..tostring(new_Attack_period))
+            end
+        else -- when tanking, use the in modsetting set value
+            inst.components.combat:SetAttackPeriod(_T.SHADOWWAXWELL_ATTACK_PERIOD)
+            if _T.BM_dodebugprints then
+                print("should tank, change attack speed back to "..tostring(_T.SHADOWWAXWELL_ATTACK_PERIOD))
+            end
+        end
+    end
+end
+helpers["check_attackspeed_kite"] = check_attackspeed_kite
+
+local function EquipNewEquip(inst,searchequipslot,actionlist,force) -- if force is "action", only search for a tool for worker that is in actionlist (and not "IsAllowedItem"). other allowed value is "allowedItem"
+    if actionlist==nil then
+        actionlist = _T.BM_SHADOW_JOBS -- for workers. set it another list, if you are searching for tools for a specifc action
+    end
+    if inst~=nil and inst.components.health~=nil and not inst.components.health:IsDead() and inst.willdespawn~=true then
+        local foundhat = nil
+        local foundarmor = nil
+        local foundweapon = nil
+        local foundtool = nil
+        local equipslot = nil
+        local pos1item = nil
+        local unequipitem = nil
+        for i = 1, inst.components.container:GetNumSlots() do
+            local item = inst.components.container:GetItemInSlot(i)
+            if item~=nil and item:IsValid() and item.components~=nil and item.components.equippable~=nil then
+                equipslot = item.components.equippable.equipslot    
+                if searchequipslot==nil then
+                    if inst.prefab=="shadowduelist" then
+                        if IsAllowedItem(inst,item,"equip") or item.components.weapon~=nil or item.components.armor~=nil then -- only armor (also hats with armor) and weapons
+                            if equipslot==EQUIPSLOTS.HANDS and foundweapon==nil then
+                                inst.components.inventory:Equip(item)
+                                foundweapon = true
+                            elseif equipslot==EQUIPSLOTS.BODY and foundarmor==nil then
+                                inst.components.inventory:Equip(item)
+                                foundarmor = true
+                            elseif equipslot==EQUIPSLOTS.HEAD and foundhat==nil then
+                                inst.components.inventory:Equip(item)
+                                foundhat = true
+                            end
+                        end
+                    elseif helpers.isshadowworker(inst.prefab) then
+                        if equipslot==EQUIPSLOTS.HANDS and foundtool==nil then -- worker only equips the one at slot 1
+                            for _,job in ipairs(actionlist) do
+                                if (force~="action" and IsAllowedItem(inst,item,"equip")) or (force~="allowedItem" and CanToolDoAction(item,job)) then
+                                    if i~=1 then -- if we did not found it in slot 1, then put it there
+                                        unequipitem = inst.components.inventory:Unequip(equipslot) -- if another tool is currently equipped, unequip it first
+                                        inst.components.container:GiveItem(unequipitem) -- and add it to the container, most likley put on pos1
+                                        pos1item = inst.components.container:RemoveItemBySlot(1) -- get item on pos1 (just to be sure)
+                                        inst.components.container:RemoveItemBySlot(i) -- do this before equipping it!
+                                        if pos1item~=nil then
+                                            inst.components.container:GiveItem(pos1item,i) -- switch positions
+                                        end
+                                        inst.components.container:GiveItem(item,1)
+                                    end
+                                    inst.components.inventory:Equip(item)
+                                    foundtool = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                elseif searchequipslot==equipslot then
+                    if helpers.isshadowworker(inst.prefab) then
+                        for _,job in ipairs(actionlist) do -- although we already checked this on ContainerShouldAcceptItem, we will check it here again. only equip specific tools
+                            if (force~="action" and IsAllowedItem(inst,item,"equip")) or (force~="allowedItem" and CanToolDoAction(item,job)) then
+                                if i~=1 then -- if we did not found it in slot 1, then put it there
+                                    unequipitem = inst.components.inventory:Unequip(equipslot) -- if another tool is currently equipped, unequip it first
+                                    inst.components.container:GiveItem(unequipitem) -- and add it to the container, most likley put on pos1
+                                    pos1item = inst.components.container:RemoveItemBySlot(1) -- get item on pos1 (just to be sure)
+                                    inst.components.container:RemoveItemBySlot(i)
+                                    if pos1item~=nil then
+                                        inst.components.container:GiveItem(pos1item,i) -- switch positions
+                                    end
+                                    inst.components.container:GiveItem(item,1)
+                                end
+                                inst.components.inventory:Equip(item)
+                                searchequipslot = "found"
+                                break
+                            end
+                        end
+                    elseif inst.prefab=="shadowduelist" then
+                        if IsAllowedItem(inst,item,"equip") or item.components.weapon~=nil or item.components.armor~=nil then -- only armor (also hats with armor) and weapons
+                            inst.components.inventory:Equip(item)
+                            searchequipslot = "found"
+                        end
+                    end
+                end   
+                if searchequipslot=="found" then -- we only searched for this specific one and found it already
+                    break
+                end
+            end
+        end
+        inst:DoTaskInTime(1,helpers.check_attackspeed_kite) -- right now, the broken armor is still equipped, so check it in 1 second again
+    end
+end
+helpers["EquipNewEquip"] = EquipNewEquip
+
+
+local function EquipNewArmor(inst,data)
+    if inst~=nil and inst.components.health~=nil and not inst.components.health:IsDead() and inst.willdespawn~=true then
+        if data~=nil then
+            local oldarmor = data.armor
+            if inst~=nil and inst.willdespawn~=true and inst.components~=nil and inst.components.container~=nil then
+                helpers.EquipNewEquip(inst,oldarmor.components.equippable.equipslot)
+            end
+        end
+    end
+end
+helpers["EquipNewArmor"] = EquipNewArmor
+
+
+
+local function Leader_Has_ActionEquipment(leader,action) -- has a shovel to allow digging, or has a pitchfork to allow to pick everything
+    local handitem = leader.components~=nil and leader.components.inventory~=nil and helpers.GetMyEquippedItem(leader,EQUIPSLOTS.HANDS) or nil
+    return CanToolDoAction(handitem,action)
+end
+helpers["Leader_Has_ActionEquipment"] = Leader_Has_ActionEquipment
+
+local function MoveInstAtLandPlotNearInst(inst,loc,x,y,z,xmin,zmin) -- xmin and zmin are the mind distance it should have to the given position
+    -- print("Spawn "..tostring(inst).." near "..tostring(loc).." times: "..tostring(times))
+    if inst==nil or loc==nil or not inst:IsValid() then
+        print("MoveInstAtLandPlotNearInst: inst is "..tostring(inst).." ? or loc is nil: "..tostring(loc).."... error")
+        return nil 
+    end
+    local pos = nil
+    if loc.prefab then    
+        pos = loc:GetPosition()
+    else -- loc can also be a position already
+        pos = loc
+    end
+    x = x or 5
+    y = y or 0 -- should be 0 most of the time, it is the height
+    z = z or 5
+    xmin = xmin or 3
+    zmin = zmin or 3
+    local xn = 0
+    local zn = 0
+    local found = false
+    local tp_pos
+    local attempts = 100
+    local spawn = nil
+    while attempts > 0 do
+        xn = GetRandomWithVariance(0,x)
+        zn = GetRandomWithVariance(0,z)
+        xn = (xn>=0 and xn<=xmin and xn+xmin) or (xn<0 and xn>=-xmin and xn-xmin) or xn -- dont be between -1 and 1, because this is too near
+        zn = (zn>=0 and zn<=zmin and zn+zmin) or (zn<0 and zn>=-zmin and zn-zmin) or zn
+        tp_pos = pos + Vector3(xn ,GetRandomWithVariance(0,y) ,zn  )
+        if TheWorld.Map:IsAboveGroundAtPoint(tp_pos:Get()) then
+            found = true
+            break
+        end
+        attempts = attempts - 1
+    end
+    if found then
+        inst.Transform:SetPosition(tp_pos:Get())
+    else
+        print("MoveInstAtLandPlotNearInst: failed to move "..tostring(inst).." to valid location..")
+    end
+    return found
+end
+helpers["MoveInstAtLandPlotNearInst"] = MoveInstAtLandPlotNearInst
+
+local function MatchSpeedAndBoundPosition(inst)
+	local leader = inst.components.follower.leader
+	if leader then
+		inst.components.locomotor.runspeed = leader.components.locomotor:RunSpeed() -- only adjust the runspeed here. modifiers are automatically taken from GetSpeedMultiplier
+	end
+    local BM_stayatposition = helpers.GetLeashPosition(inst) -- checks inst.BM_staywalkableplattform and inst.BM_stayatposition
+    if helpers.Findandconsume_prefab(inst,1,_T.BM_stayitemprefab,"onlyfind") then -- if we have a stayitem in container, bound to position instead of leader
+        inst.components.follower:StopLeashing() -- stop teleporting to the leader (call it always in case something changed it)
+        if BM_stayatposition==nil then
+            inst.BM_staywalkableplattform = inst:GetCurrentPlatform()
+            if inst.BM_staywalkableplattform==nil then
+                inst.BM_stayatposition = inst:GetPosition() -- position is saved/loaded within shadowtoggleable component. we have to save/load it, cause otherwise the position might move a bit everytime loading the game
+            end
+            
+        else -- BM_stayatposition~=nil -- check distance to position and teleport to it
+            local init_pos = inst:GetPosition()
+            local leader_pos = BM_stayatposition
+
+            if distsq(leader_pos, init_pos) > (_T.BM_KEEP_WORKING_DIST*2)^2 then -- if more than double of the should distance away (for whatever reason), teleport him back to this position
+                if inst.components.combat ~= nil then
+                    inst.components.combat:SetTarget(nil)
+                end
+                inst:DoTaskInTime(0, function(inst,leader_pos) -- crash if without DoTaskInTime
+                    if inst.Physics ~= nil then
+                        inst.Physics:Teleport(leader_pos:Get())
+                    else
+                        inst.Transform:SetPosition(leader_pos:Get())
+                    end
+                end, leader_pos)
+            end
+        end
+    else
+        if BM_stayatposition~=nil then
+            inst.components.follower:StartLeashing() -- start teleporting to leader again
+            inst.BM_stayatposition = nil
+            inst.BM_staywalkableplattform = nil
+        end
+    end
+end
+helpers["MatchSpeedAndBoundPosition"] = MatchSpeedAndBoundPosition
+
+
+
+return helpers

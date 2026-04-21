@@ -1,0 +1,6 @@
+<Atlas>
+  <Texture filename="newframe.tex" />
+  <Elements>
+    <Element name="mainframe.tex" u1="0.01123047" u2="0.6645508" v1="0.628418" v2="0.9887695" />
+  </Elements>
+</Atlas>
