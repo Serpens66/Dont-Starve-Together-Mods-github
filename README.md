@@ -1,5 +1,5 @@
 # Dont Starve Together Mods github  
-Dont Starve Toghert Mods I made or edited (if edited, the other authors are listed in the modinfo file)  
+Dont Starve Toghert Mods I (Serp66) made or edited (if edited, the other authors are listed in the modinfo file)  
 
 You can find all my uploaded Mods at steam workshop:  
 https://steamcommunity.com/profiles/76561198102311542/myworkshopfiles/?appid=322330  
