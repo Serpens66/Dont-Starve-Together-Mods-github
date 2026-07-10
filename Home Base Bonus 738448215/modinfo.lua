@@ -3,7 +3,7 @@ name = "Home Base Bonus"
 description = "Carpet turfs (Wooden, Carpet and Marble Floor) work as a familiar home with roof.\nThey can give speed, sanity, insulation and rainreduction bonus.\nRain reduction also applies to structures and items.\nYou can configure what and if it should be always on, or only if they belong to a real base.\nBy default a base is at least a science, alchemy machine, a crockpot, a chest and a lightsource + 10 walls near (30 steps) the floor.\nYou can change the definition of base in the settings."
 --It also contains a drying-fire mod, hot things will give rain reduction.Also structures and items will get wet later or dry faster,if in range of heat.
 author = "Serpens66 and [BSy]Jupiter"
-version = "1.1.79"
+version = "1.1.802"
 forumthread = "/topic/69150-mod-release-home-base-bonus/"
 -- special thanks to IvanX, who helped me adding components and an icon ;)
 -- and also thanks to DarkXero who helped me with all the client/server stuff :)

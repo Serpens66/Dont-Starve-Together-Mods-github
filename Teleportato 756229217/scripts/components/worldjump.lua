@@ -1,5 +1,7 @@
 --- ############# Worldjump code by DarkXero! 
 
+local TeleJson = require("tele_json")
+
 local function PlayerExitWorld(player)
     if TheWorld.components.worldjump then
         TheWorld.components.worldjump:OnPlayerExitWorld(player)
@@ -41,6 +43,7 @@ local function OnPlayerSpawn(world, player)
                             player:OnLoad(jumpdata.chardata) -- for whatever reason although the function requires "inst,data", inst is automatcally transfered, so we only need to pass data
                         end
                         for dataname,data in pairs(jumpdata.chardata) do -- load all components data automatically
+                          local success, err = xpcall(function() -- it can cause errors, depending on the code of the component, so better prevent a game crash with this...
                             if data~=nil and player.components[dataname]~=nil and player.components[dataname].OnLoad~=nil then
                                 if (dataname~="age" or worldjump.saveage) and
                                     (dataname~="skinner" or TUNING.TELEPORTATOMOD.repickcharacter==false) and
@@ -59,9 +62,17 @@ local function OnPlayerSpawn(world, player)
                                             data.equip = {} -- delete quipped items
                                         end
                                     end
-                                    player.components[dataname]:OnLoad(data)
+                                    if dataname == "upgrademoduleowner" and data.module_bars then -- legacy JSON changed numeric object keys to strings, which causes problems in this component
+                                      local numeric_module_bars = {}
+                                      for key, value in pairs(data.module_bars) do
+                                        numeric_module_bars[tonumber(key) or key] = value
+                                      end
+                                      data.module_bars = numeric_module_bars
+                                    end
+                                    player.components[dataname]:OnLoad(data, {}) -- newents/refs is not needed for our cause, cause it is a new game
                                 end
                             end
+                          end,print) -- if an error happens within xpcall, the error is printed
                         end
                         player.components.health:ForceUpdateHUD(true) -- update HUD after all those changes
                     else -- load the components manually, because we dont want to transfer everything to the new character
@@ -178,12 +189,12 @@ end
 function WorldJump:LoadPlayerData()
 	local callback = function(success, encoded_data)
 		if success then
-			local decoded_data = json.decode(encoded_data)
+			local decoded_data = TeleJson.Decode(encoded_data)
 			local decoded_session = decoded_data.session_id
 			local session_id = TheNet:GetSessionIdentifier()
 			if decoded_session == nil then
 				decoded_data.session_id = session_id
-				local re_encoded_data = json.encode(decoded_data)
+				local re_encoded_data = TeleJson.Encode(decoded_data)
 				TheSim:SetPersistentString(self.info_dir, re_encoded_data, true)
 				self.player_data = decoded_data
 			elseif decoded_session == session_id then
@@ -217,9 +228,9 @@ function WorldJump:SavePlayerData(pl)
                 stuff.chardata = record.data
             end
         end
-        if pl.components.upgrademoduleowner then
-            stuff.upgrademoduleowner_data,stuff.upgrademoduleowner_refs = pl.components.upgrademoduleowner:OnSave()
-        end
+        -- if pl.components.upgrademoduleowner then
+            -- stuff.upgrademoduleowner_data,stuff.upgrademoduleowner_refs = pl.components.upgrademoduleowner:OnSave()
+        -- end
         -- print("HIER inventory_data and reference: "..tostring(inventory_data).." , "..tostring(inventory_references).." from "..tostring(pl))
         -- for k,v in pairs(inventory_data.items) do
             -- print(tostring(k).." , "..tostring(v))
@@ -248,9 +259,9 @@ function WorldJump:SavePlayerData(pl)
                 stuff.chardata = record.data
             end
             
-            if v.components.upgrademoduleowner then
-                stuff.upgrademoduleowner_data,stuff.upgrademoduleowner_refs = v.components.upgrademoduleowner:OnSave()
-            end
+            -- if v.components.upgrademoduleowner then
+                -- stuff.upgrademoduleowner_data,stuff.upgrademoduleowner_refs = v.components.upgrademoduleowner:OnSave()
+            -- end
             v.components.inventory:DropEverythingWithTag("irreplaceable")
             -- inventory_data, inventory_references = v.components.inventory:OnSave()
             -- stuff.inventory_data = inventory_data
@@ -275,7 +286,7 @@ function WorldJump:SavePlayerData(pl)
         self.player_data_save.savebuilder = self.savebuilder
         self.player_data_save.saveage = self.saveage
         if self.inst.ismastershard then -- only for master shard
-            local encoded_data = json.encode(self.player_data_save)
+            local encoded_data = TeleJson.Encode(self.player_data_save)
             TheSim:SetPersistentString(self.info_dir, encoded_data, true) -- only save it in string when the worldjump is done.
         end
     end
