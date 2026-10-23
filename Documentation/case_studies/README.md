@@ -1,0 +1,26 @@
+# Fallstudienregister
+
+- [01 food queue](01_food_queue.md)
+- [02 trash can](02_trash_can.md)
+- [03 repair combine](03_repair_combine.md)
+- [04 finder](04_finder.md)
+- [05 maxwell](05_maxwell.md)
+- [06 homebase](06_homebase.md)
+- [07 auto actions](07_auto_actions.md)
+- [08 show me](08_show_me.md)
+- [09 world generation](09_world_generation.md)
+- [10 more worldsettings](10_more_worldsettings.md)
+- [11 teleportato](11_teleportato.md)
+- [12 adventure](12_adventure.md)
+- [13 hamlet architecture](13_hamlet_architecture.md)
+- [14 skins architecture](14_skins_architecture.md)
+- [15 foodmemory](15_foodmemory.md)
+- [16 explosive](16_explosive.md)
+- [17 farm](17_farm.md)
+- [18 spacing](18_spacing.md)
+- [19 random clock](19_random_clock.md)
+- [20 scythe](20_scythe.md)
+- [21 health](21_health.md)
+- [22 ice](22_ice.md)
+
+[Abdeckungsmatrix](../21_Abdeckungsmatrix.md) · [Katalog](../16_Workspace_Mods.md) · [Auditnachweise](../22_Vertiefungs_Audits.md). Alle Fälle sind statische Analysen; Laufzeitszenarien bleiben offen.

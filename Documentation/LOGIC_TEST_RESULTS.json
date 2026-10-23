@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-03",
+  "python_compile_errors": [],
+  "python_files_compiled": 6,
+  "suites": [
+    {
+      "name": "reference_checker",
+      "started": true,
+      "exit_code": 0,
+      "passed": true,
+      "tests_succeeded": 6,
+      "stdout": "",
+      "stderr": "......\r\n----------------------------------------------------------------------\r\nRan 6 tests in 0.001s\r\n\r\nOK\r\n"
+    },
+    {
+      "name": "own_lua_logic",
+      "started": true,
+      "exit_code": 0,
+      "passed": true,
+      "tests_succeeded": 22,
+      "stdout": "PASS history MRU deduplicates and evicts\r\nPASS history reduces positive values only, after prior wrapper\r\nPASS history load validates version, length, type and duplicates\r\nPASS removed history remains inactive inside later foreign wrapper\r\nPASS removed history restores previous wrapper when still owner\r\nPASS timer preserves fractional progress on live option change\r\nPASS timer load migrates old period to current option\r\nPASS timer rejects NaN, infinities, bounds and unknown save version\r\ndoc_worldpulse\t1\t30\r\nPASS timer callback rearms once and removal cancels\r\nPASS query rejects malformed sequence before scanning\r\nPASS query uses authenticated player, bounds reply and throttles\r\nPASS client callback works in real-style mod environment without tonumber\r\nPASS historical Lua boolean precedence is reproducible\r\nPASS stew accepts every raw-cooked four-carrot distribution\r\nPASS stew rejects incomplete and unrelated ingredients\r\nPASS stew test leaves shared cooking inputs unchanged\r\nPASS stew has explicit finite weight and consistent visual fields\r\nPASS stew modmain registers all three cookers with its product\r\nPASS spicer guard rejects only new unspiced food and preserves prior filter\r\nPASS actual cooking selection resolves priority and weighted conflicts\r\nPASS character callback fragment restores own state without issuing startitems\r\nPASS character callback fragment rejects malformed saved state\r\nRESULT 22 tests passed; engine and multiplayer not tested\r\n",
+      "stderr": ""
+    }
+  ],
+  "infrastructure_errors": [],
+  "engine_tests": "not performed",
+  "passed": true
+}

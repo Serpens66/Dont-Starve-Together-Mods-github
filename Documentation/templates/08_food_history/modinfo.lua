@@ -1,0 +1,10 @@
+name = "Persistente Nahrungshistorie"
+description = "Eigenständiges Lernbeispiel; Laufzeitprüfung offen."
+author = "Documentation"
+version = "1.0.0"
+api_version = 10
+dst_compatible = true
+dont_starve_compatible = false
+reign_of_giants_compatible = false
+client_only_mod = false
+all_clients_require_mod = true

@@ -1,0 +1,175 @@
+{
+  "declarations": [
+    {
+      "template": "02_item",
+      "source": "templates\\02_item\\scripts\\prefabs\\doc_training_spear.lua",
+      "kind": "ANIM",
+      "path": "anim/spear.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\spear.zip",
+      "sha256": "80955d530bfa10959f25a998e670ff6bbafc8b6995835653f86cdccaf384ce5b",
+      "members": [
+        "anim.bin"
+      ]
+    },
+    {
+      "template": "02_item",
+      "source": "templates\\02_item\\scripts\\prefabs\\doc_training_spear.lua",
+      "kind": "ANIM",
+      "path": "anim/swap_spear.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\swap_spear.zip",
+      "sha256": "9f7b63ca086c9b7b706ef6c727eea3e4ab1eefa39642e4c186ee0ef6ca33e7b7",
+      "members": [
+        "atlas-0.tex",
+        "build.bin"
+      ]
+    },
+    {
+      "template": "03_network_component",
+      "source": "templates\\03_network_component\\scripts\\prefabs\\doc_counter_token.lua",
+      "kind": "ANIM",
+      "path": "anim/spear.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\spear.zip",
+      "sha256": "80955d530bfa10959f25a998e670ff6bbafc8b6995835653f86cdccaf384ce5b",
+      "members": [
+        "anim.bin"
+      ]
+    },
+    {
+      "template": "03_network_component",
+      "source": "templates\\03_network_component\\scripts\\prefabs\\doc_counter_token.lua",
+      "kind": "ANIM",
+      "path": "anim/swap_spear.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\swap_spear.zip",
+      "sha256": "9f7b63ca086c9b7b706ef6c727eea3e4ab1eefa39642e4c186ee0ef6ca33e7b7",
+      "members": [
+        "atlas-0.tex",
+        "build.bin"
+      ]
+    },
+    {
+      "template": "07_container_building",
+      "source": "templates\\07_container_building\\scripts\\prefabs\\doc_storage_chest.lua",
+      "kind": "ANIM",
+      "path": "anim/treasure_chest.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\treasure_chest.zip",
+      "sha256": "4ba54e519ba2353a05f0643cc386619369d449648fa29d986150a78714445a80",
+      "members": [
+        "anim.bin",
+        "atlas-0.tex",
+        "build.bin"
+      ]
+    },
+    {
+      "template": "07_container_building",
+      "source": "templates\\07_container_building\\scripts\\prefabs\\doc_storage_chest.lua",
+      "kind": "ANIM",
+      "path": "anim/ui_chest_3x3.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\ui_chest_3x3.zip",
+      "sha256": "b71e9401a079cfa3b7da33beaaea3f58b50850ddda3dc12c0d1da312211a39e3",
+      "members": [
+        "anim.bin",
+        "atlas-0.tex",
+        "build.bin"
+      ]
+    },
+    {
+      "template": "09_source_bonus",
+      "source": "templates\\09_source_bonus\\scripts\\prefabs\\doc_bonus_spear.lua",
+      "kind": "ANIM",
+      "path": "anim/spear.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\spear.zip",
+      "sha256": "80955d530bfa10959f25a998e670ff6bbafc8b6995835653f86cdccaf384ce5b",
+      "members": [
+        "anim.bin"
+      ]
+    },
+    {
+      "template": "09_source_bonus",
+      "source": "templates\\09_source_bonus\\scripts\\prefabs\\doc_bonus_spear.lua",
+      "kind": "ANIM",
+      "path": "anim/swap_spear.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\swap_spear.zip",
+      "sha256": "9f7b63ca086c9b7b706ef6c727eea3e4ab1eefa39642e4c186ee0ef6ca33e7b7",
+      "members": [
+        "atlas-0.tex",
+        "build.bin"
+      ]
+    },
+    {
+      "template": "13_cooked_food",
+      "source": "templates\\13_cooked_food\\scripts\\prefabs\\doc_carrot_stew.lua",
+      "kind": "ANIM",
+      "path": "anim/cook_pot_food.zip",
+      "location": "E:\\ProgrammeE\\Steam\\steamapps\\common\\Don't Starve Together\\data\\anim\\cook_pot_food.zip",
+      "sha256": "d94a524b656c8e1778d490596fd803cbbad1507d34f29f9358312f5cf0bd5d67",
+      "members": [
+        "anim.bin",
+        "atlas-0.tex",
+        "build.bin"
+      ]
+    }
+  ],
+  "inventory_images": [
+    {
+      "template": "02_item",
+      "image": "spear.tex",
+      "atlases": [
+        "images/inventoryimages3.xml"
+      ]
+    },
+    {
+      "template": "02_item",
+      "image": "spear.tex",
+      "atlases": [
+        "images/inventoryimages3.xml"
+      ]
+    },
+    {
+      "template": "03_network_component",
+      "image": "spear.tex",
+      "atlases": [
+        "images/inventoryimages3.xml"
+      ]
+    },
+    {
+      "template": "07_container_building",
+      "image": "boards.tex",
+      "atlases": [
+        "images/inventoryimages1.xml"
+      ]
+    },
+    {
+      "template": "09_source_bonus",
+      "image": "spear.tex",
+      "atlases": [
+        "images/inventoryimages3.xml"
+      ]
+    },
+    {
+      "template": "09_source_bonus",
+      "image": "spear.tex",
+      "atlases": [
+        "images/inventoryimages3.xml"
+      ]
+    },
+    {
+      "template": "13_cooked_food",
+      "image": "ratatouille.tex",
+      "atlases": [
+        "images/inventoryimages3.xml"
+      ]
+    },
+    {
+      "template": "13_cooked_food",
+      "image": "ratatouille.tex",
+      "atlases": [
+        "images/inventoryimages3.xml"
+      ]
+    }
+  ],
+  "worldoption_icon_checked": true,
+  "unresolved_dynamic": [],
+  "errors": [],
+  "passed": true,
+  "boundary": "Existence, zip members and XML regions only; no native resolution/rendering/animation/audio test"
+}

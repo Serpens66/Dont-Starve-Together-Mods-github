@@ -1,0 +1,1 @@
+-- This example changes generation data only; no runtime entity hooks are needed.

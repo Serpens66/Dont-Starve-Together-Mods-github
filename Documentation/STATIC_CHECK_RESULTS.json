@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "text_files": 129,
+    "markdown_links": 1620,
+    "markdown_anchors": 13,
+    "source_symbol_links": 437,
+    "source_evidence": 210,
+    "api_signatures": 93,
+    "lua_syntax_files": 0,
+    "lua_syntax_successes": 0,
+    "source_hashes": 126,
+    "workspace_hashes": 236,
+    "template_dependencies": 13
+  },
+  "lua_files_expected": 45,
+  "template_lua_files": 42,
+  "errors": [],
+  "syntax_errors": [],
+  "syntax_skipped": true,
+  "infrastructure_errors": [],
+  "static_passed": true,
+  "syntax_complete": false,
+  "syntax_passed": false,
+  "passed": false,
+  "coverage_mods": 26,
+  "runtime_tests": "not performed"
+}
