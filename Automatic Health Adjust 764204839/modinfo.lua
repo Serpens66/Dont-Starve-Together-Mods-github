@@ -3,7 +3,7 @@ description = "This mod automatically adjusts the health of mobs depending on th
 author = "Serpens"
 forumthread = ""
 
-version = "1.1074"
+version = "1.1075"
 api_version = 10
 
 dst_compatible = true
@@ -20,14 +20,14 @@ icon = "modicon.tex"
 
 local nameslist = {'AncGuardian', 'Ancient_Sentrypede', 'Ancient_Guard_Tower', 'Antlion', 'Bearger', 'Bearger_Armored', 'Beefalo', 'Beeguard', 'Beequeen', 'Blighted_Great_Depths_Worm', 'Blighted_Hound_Batilisk', 'Blighted_Rock_Master', 'Brightshade', 'Brightshade_Vine', 'Bunnyman', 'Buzzard', 'Celestial_Champion1', 'Celestial_Champion2', 
  'Celestial_Champion3', 'Celestial_Revenant', 'Celestial_Scion', 'Clockworks', 'Crabking', 'Crabking_Claw', 'Deer', 'DeerGem', 'Deerclops', 'Deerclops_Crystal', 'Dragonfly', 'Eye_of_Terror', 'Eye_of_Terror_Mini', 'Eye_of_Terror_Twin1', 'Eye_of_Terror_Twin2', 
- 'Ewecus', 'Fused_Shadeling', 'Frostjaw', 'Gnarwail', "Grassgator", 'Hound_Batilisk', 'Icker', 'InkBlight_Jitters', 'InkBlight_Rasp', 'InkBlight_Rictus', 'InkBlight_Shriek', 'Klaus1', 'Klaus2', 'Koalefant', 'Krampus', 'Lavae', 'Lord_Fruit_Flies', 'Lurking_Nightmare'; 'Malbatross', 'Marotter', 'Merm', 'Moose', 'Mosling', 'Mush_Gnome', 'Nightmare_Werepig', 'Ornery_Chest', 'Pig_Guard', 'Pig', 'Poisonedtree', 'Powder_Monkey', 'Prime_Mate', 
+ 'Ewecus', 'Fused_Shadeling', 'Frostjaw', 'Gnarwail', "Grassgator", 'Hallowed_Nights', 'Hound_Batilisk', 'Icker', 'InkBlight_Jitters', 'InkBlight_Rasp', 'InkBlight_Rictus', 'InkBlight_Shriek', 'Klaus1', 'Klaus2', 'Koalefant', 'Krampus', 'Lavae', 'Lord_Fruit_Flies', 'Lurking_Nightmare'; 'Malbatross', 'Marotter', 'Merm', 'Moose', 'Mosling', 'Mush_Gnome', 'Nightmare_Werepig', 'Ornery_Chest', 'Pig_Guard', 'Pig', 'Poisonedtree', 'Powder_Monkey', 'Prime_Mate',
  'Rabbitking', 'Royal_Rabbit_Enforcer', 'RLobster', 'Rock_Master', 'Rockjaw', 'Saladmander', 'Sea_Weed', 'Shadow_Bishop1',  'Shadow_Bishop2', 'Shadow_Bishop3', 'Shadow_Knight1', 'Shadow_Knight2', 'Shadow_Knight3', 'Shadow_Rook1', 
  'Shadow_Rook2', 'Shadow_Rook3', 'Shootius', 'Shrouded_Queen', 'Skeleton_A', 'Skeleton', 'Slurtle', 'Spider_dropper', 'Spider_healer', 'Spider_hider', 'Spider_spitter', 'Spider_warrior', 
  'Spiderqueen', 'Tallbird', 'Teenbird', 'Tentacle_pillar', 'Terramite', 'Toadstool', 'ToadstoolMisery', 'Treeguard', 'Umbral_Abomination',  'Voaltgoat', 'Walrus', 'W.A.R.B.O.T.', 'Warg', 'Warg_Possessed', 'Werepig', 'Worm', 'Great_Depths_Worm'}
 -- DS and DST values, same order as the names above! (can not use "pairs" within modinfo, so we have two lists and will use #nameslist)
 local valuelist = {{2500, 10000}, {600, 1200}, {2000, 6000}, {3000, 6000}, {3000, 6000}, {4000, 8000}, {500, 1000}, {100, 180}, {3000, 22500}, {2000, 6000}, {1000, 3000}, {1650, 5000}, {500, 1000}, {100, 200}, {200, 400}, {125, 250}, {2000, 10000}, {2600, 13000}, 
  {2800, 14000}, {2000,8000}, {3500,16000}, {300, 900}, {3000, 12000}, {100, 500}, {350, 700}, {750, 1500}, {2000, 4000}, {3000, 6000}, {3500, 27500}, {2000,5000}, {150,200}, {4000,10000}, {4000,10000}, 
- {400, 800}, {625, 1250}, {4000, 8000}, {500, 1000}, {500, 1000}, {500, 1500}, {300, 600}, {500, 1000}, {600, 1200}, {400, 800}, {400, 800}, {2000, 10000}, {5488, 27440}, {500, 1000}, {200, 300}, {250, 500}, {900, 1500}, {400, 850}, {1500, 5000}, {175, 350}, {250, 500}, {3000, 6000}, {350, 525}, {300, 600}, {2000,10000}, {400,950}, {300, 600}, {250, 500}, {12, 18}, {100, 200}, {200, 350},
+ {400, 800}, {625, 1250}, {4000, 8000}, {500, 1000}, {500, 1000}, {400, 600}, {500, 1500}, {300, 600}, {500, 1000}, {600, 1200}, {400, 800}, {400, 800}, {2000, 10000}, {5488, 27440}, {500, 1000}, {200, 300}, {250, 500}, {900, 1500}, {400, 850}, {1500, 5000}, {175, 350}, {250, 500}, {3000, 6000}, {350, 525}, {300, 600}, {2000,10000}, {400,950}, {300, 600}, {250, 500}, {12, 18}, {100, 200}, {200, 350},
  {800, 2000}, {150, 400},{1500, 3000}, {1400, 4000}, {500, 1000}, {450, 900}, {250, 500}, {250, 800}, {800, 2500}, {2500, 7500}, {300, 900}, {900, 2700}, {2700, 8100}, {350, 1000}, 
  {1000, 4000}, {4000, 10000}, {1000, 3000}, {3700, 18500}, {6000, 16000}, {2000, 4000}, {600, 1200}, {200, 400}, {200, 400}, {150, 225}, {175, 350}, {200, 400}, 
  {1250, 2500}, {400, 800}, {300, 600}, {500, 750}, {140, 280}, {7500, 52500}, {11111, 99999}, {2000, 3000}, {3500, 16000}, {350, 700}, {150, 300}, {4500, 22500}, {600, 1800}, {1500, 3000}, {350, 525}, {450, 900}, {1500, 5000},}

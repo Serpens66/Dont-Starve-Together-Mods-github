@@ -33,7 +33,7 @@ local prefabnamelist = {minotaur='AncGuardian', archive_centipede='Ancient_Sentr
 local namevalueslist = {AncGuardian={2500, 10000}, Ancient_Sentrypede={600, 1200}, Ancient_Guard_Tower={2000, 6000}, Antlion={3000, 6000}, Bearger={3000, 6000}, Bearger_Armored={4000, 8000}, Beefalo={500, 1000}, Beeguard={100, 180},
  Beequeen={3000, 22500}, Blighted_Great_Depths_Worm={2000, 6000}, Blighted_Hound_Batilisk={1000, 3000}, Blighted_Rock_Master={1650, 5000}, Brightshade={500, 1000}, Brightshade_Vine={100, 200}, Bunnyman={200, 400}, Buzzard={125, 250}, Celestial_Champion1={2000, 10000}, Celestial_Champion2={2600, 13000}, Celestial_Champion3={2800, 14000},
  Celestial_Revenant={2000,8000}, Celestial_Scion={3500,16000}, Clockworks={300, 900}, Crabking={3000, 12000}, Crabking_Claw={100, 500}, Deer={350, 700}, DeerGem={750, 1500}, Deerclops={2000, 4000}, Deerclops_Crystal={3000,6000}, Dragonfly={3500, 27500}, 
- Eye_of_Terror={2000,5000}, Eye_of_Terror_Mini={150,200}, Eye_of_Terror_Twin1={4000,10000}, Eye_of_Terror_Twin2={4000,10000}, Ewecus={400, 800}, Fused_Shadeling={625, 1250}, Frostjaw={4000, 8000}, Gnarwail={500, 1000}, Grassgator={500, 1000}, Hound_Batilisk={500, 1500}, Icker={300, 600}, InkBlight_Jitters={500, 1000}, InkBlight_Rasp={600, 1200}, InkBlight_Rictus={400, 800}, InkBlight_Shriek={400, 800}, Klaus1={2000, 10000}, Klaus2={5440, 27440}, Koalefant={500, 1000},
+ Eye_of_Terror={2000,5000}, Eye_of_Terror_Mini={150,200}, Eye_of_Terror_Twin1={4000,10000}, Eye_of_Terror_Twin2={4000,10000}, Ewecus={400, 800}, Fused_Shadeling={625, 1250}, Frostjaw={4000, 8000}, Gnarwail={500, 1000}, Grassgator={500, 1000}, Hallowed_Nights={400, 600}, Hound_Batilisk={500, 1500}, Icker={300, 600}, InkBlight_Jitters={500, 1000}, InkBlight_Rasp={600, 1200}, InkBlight_Rictus={400, 800}, InkBlight_Shriek={400, 800}, Klaus1={2000, 10000}, Klaus2={5440, 27440}, Koalefant={500, 1000},
  Krampus={200, 300}, Lavae={250, 500}, Lord_Fruit_Flies={900, 1500}, Lurking_Nightmare={400, 850}, Malbatross={1500, 5000}, Marotter={175, 350}, Merm={250, 500}, Moose={3000, 6000}, Mosling={350, 525}, Mush_Gnome={300, 600}, Nightmare_Werepig={2000,10000}, Ornery_Chest={400,950},
  Pig_Guard={300, 600}, Pig={250, 500}, Poisonedtree={12, 18}, Powder_Monkey={100, 200}, Prime_Mate={200, 350}, Rabbitking={800, 2000}, Royal_Rabbit_Enforcer={150, 400},  RLobster={1500, 3000}, Rock_Master={1400, 4000}, Rockjaw={500, 1000}, Saladmander={450, 900}, Sea_Weed={250, 500}, Shadow_Bishop1={250, 800},
  Shadow_Bishop2={800, 2500}, Shadow_Bishop3={2500, 7500}, Shadow_Knight1={300, 900}, Shadow_Knight2={900, 2700}, Shadow_Knight3={2700, 8100}, Shadow_Rook1={350, 1000},
@@ -67,9 +67,37 @@ local adjust_TUNING_with_same_ratio = {
   stalker_atrium={"STALKER_ATRIUM_PHASE2_HEALTH"}, -- also adjust STALKER_ATRIUM_PHASE2_HEALTH , because dst devs hardcoded this value instead of using healthrigger-precentage -.-
   merm={"MERM_HEALTH_REGEN_AMOUNT","MERM_HEALTH_KINGBONUS","MERM_GUARD_HEALTH","PUNY_MERM_HEALTH","MERM_LUNAR_GUARD_EXTRA_HEALTH","MERM_LUNAR_EXTRA_HEALTH"}, -- are here and not in adjust_ents_with_same_ratio, because the health of merms is calculated in UpdateDamageAndHealth , which we also call later.
 }
-local call_inst_fn_for_ents = {mermguard="UpdateDamageAndHealth",merm_lunar="UpdateDamageAndHealth", -- UpdateDamageAndHealth does not adjust current health, but is ok, since they regenerate
+-- Opt in here to scale the prefab's ratio entries from their values at mod startup.
+local fixed_ratio_base_keys = {merm="MERM_HEALTH"}
+local fixed_ratio_tuning = {}
+for prefab,key in pairs(fixed_ratio_base_keys) do
+  local original = {base=GLOBAL.TUNING[key], values={}}
+  for _,tuning_name in ipairs(adjust_TUNING_with_same_ratio[prefab]) do
+    original.values[tuning_name] = GLOBAL.TUNING[tuning_name]
+  end
+  fixed_ratio_tuning[prefab] = original
+end
+local call_inst_fn_for_ents = {merm="UpdateDamageAndHealth",mermguard="UpdateDamageAndHealth",merm_lunar="UpdateDamageAndHealth",
   mermguard_lunar="UpdateDamageAndHealth",merm_shadow="UpdateDamageAndHealth",mermguard_shadow="UpdateDamageAndHealth",
 }
+
+-- Shared settings use the usual name/values. The prefab field is passed to CUSTOMHEALTH_FN.
+local shared_health_settings = {
+  Hallowed_Nights={prefab="hallowed_nights", tuning="HN_MONSTER_HEALTH"},
+}
+
+-- Match forms on the base prefab and flag. Restore uses the same flag in saved data.
+-- Set transform_method only if other prefab code can overwrite the active form's max health.
+local health_forms = {
+  pigman={flag="franken", setting="Hallowed_Nights", restore_normal_health=true,
+    skip_restore=function(data)
+      -- A former Frankenswine can be saved as an actual Werepig after the event.
+      return data.werebeast and data.werebeast.time~=nil
+    end},
+  merm={flag="mummy", setting="Hallowed_Nights", restore_normal_health=true, transform_method="MakeMummyMerm"},
+  bunnyman={flag="vampire", setting="Hallowed_Nights", restore_normal_health=true},
+}
+local form_health_change = {}
 
 local adjust_ents_with_same_ratio = {
   -- mutatedbearger={ratio_from_prefab="bearger",TUNING="MUTATED_BEARGER_HEALTH"},
@@ -153,6 +181,32 @@ end
 
 
 
+local function GetHealthSetting(NumPlayer,quickset_mode,prefab,name)
+    local setting1, setting6
+    if quickset_mode==2 then -- easy
+        setting1 = namevalueslist[name][1] * 0.5
+        setting6 = (namevalueslist[name][2] + namevalueslist[name][1])/2
+    elseif quickset_mode==3 then -- normal
+        setting1 = namevalueslist[name][1]
+        setting6 = namevalueslist[name][2]
+    elseif quickset_mode==4 then -- hard
+        setting1 = (namevalueslist[name][2] + namevalueslist[name][1])/2
+        setting6 = namevalueslist[name][2] * 1.5
+    elseif quickset_mode==5 then -- very hard
+        setting1 = namevalueslist[name][2]
+        setting6 = namevalueslist[name][2] * 2
+    else -- quickset_mode==1 or any other value
+        setting1 = GetModConfigData(name.."1") -- if mode == 1
+        setting6 = GetModConfigData(name.."6") -- if mode == 1
+        if shared_health_settings[name]~=nil then
+            setting1 = setting1 or namevalueslist[name][1]
+            setting6 = setting6 or namevalueslist[name][2]
+        end
+    end
+    local newmax = GLOBAL.TUNING.AUTOHEALTHMOD.CUSTOMHEALTH_FN(NumPlayer,setting1,setting6,prefab,name)
+    return {prefab=prefab,setting1=setting1,setting6=setting6,newmax=newmax}
+end
+
 local function DoHealthChange(world,player,testnumplayer)
     local NumPlayer = #GLOBAL.AllPlayers -- only the players from the world were player spawned/left. So if one player is in cave and one at overworld, both worlds will have the values for 1 player.
     if testnumplayer~=nil then
@@ -181,29 +235,16 @@ local function DoHealthChange(world,player,testnumplayer)
     local tuningkey
 
     local settings = {}
+    for name,info in pairs(shared_health_settings) do
+      settings[name] = GetHealthSetting(NumPlayer,quickset_mode,info.prefab,name)
+      GLOBAL.TUNING[info.tuning] = settings[name].newmax
+    end
     for prefab,names in pairs(prefabnamelist) do -- change Tuning value, so new enemies will have this HP
       if (type(names) == "string") then -- most of the times a string, but eg for klaus a table
           names = {names}
       end
       for _,name in ipairs(names) do
-        if quickset_mode==2 then -- easy
-            setting1 = namevalueslist[name][1] * 0.5
-            setting6 = (namevalueslist[name][2] + namevalueslist[name][1])/2
-        elseif quickset_mode==3 then -- normal
-            setting1 = namevalueslist[name][1]
-            setting6 = namevalueslist[name][2]
-        elseif quickset_mode==4 then -- hard
-            setting1 = (namevalueslist[name][2] + namevalueslist[name][1])/2
-            setting6 = namevalueslist[name][2] * 1.5
-        elseif quickset_mode==5 then -- very hard
-            setting1 = namevalueslist[name][2]
-            setting6 = namevalueslist[name][2] * 2
-        else -- quickset_mode==1 or any other value
-            setting1 = GetModConfigData(name.."1") -- if mode == 1
-            setting6 = GetModConfigData(name.."6") -- if mode == 1
-        end
-        newmax = GLOBAL.TUNING.AUTOHEALTHMOD.CUSTOMHEALTH_FN(NumPlayer,setting1,setting6,prefab,name) -- setting1 + (NumPlayer-1)*((setting6-setting1)/5)
-        settings[name] = {prefab=prefab,setting1=setting1,setting6=setting6,newmax=newmax}
+        settings[name] = GetHealthSetting(NumPlayer,quickset_mode,prefab,name)
       end
     end
     
@@ -282,10 +323,13 @@ local function DoHealthChange(world,player,testnumplayer)
             -- Health tuning adjustments with same ratio of things related to the mob, eg. health_boost from crabking, or hardcoded STALKER_ATRIUM_PHASE2_HEALTH from stalker...
             if settings[name].oldTuning~=nil then
               if adjust_TUNING_with_same_ratio[prefab]~=nil then
-                for t_i,tuning_name in ipairs(adjust_TUNING_with_same_ratio[prefab]) do
-                  if GLOBAL.TUNING[tuning_name]~=nil then
-                    local sixplayer = GLOBAL.TUNING[tuning_name] / (settings[name].oldTuning/setting6) -- get the same ratio like set for health, so we need no config value for the boost/bonus
-                    local oneplayer = GLOBAL.TUNING[tuning_name] / (settings[name].oldTuning/setting1)
+                local original = fixed_ratio_tuning[prefab]
+                local base = original and original.base or settings[name].oldTuning
+                for _,tuning_name in ipairs(adjust_TUNING_with_same_ratio[prefab]) do
+                  local value = original and original.values[tuning_name] or GLOBAL.TUNING[tuning_name]
+                  if value~=nil then
+                    local sixplayer = value / (base/setting6)
+                    local oneplayer = value / (base/setting1)
                     GLOBAL.TUNING[tuning_name] = GLOBAL.TUNING.AUTOHEALTHMOD.CUSTOMHEALTH_FN(NumPlayer,oneplayer,sixplayer,prefab,name) -- oneplayer + (NumPlayer-1)*((sixplayer-oneplayer)/5)
                   else
                     print("Automatic Health Adjust: Error , trying to adjust TUNING value "..tostring(tuning_name)..", but it does not exist? May need fixing")
@@ -320,13 +364,24 @@ local function DoHealthChange(world,player,testnumplayer)
             ratio_from_prefab = adjust_ents_with_same_ratio[prefab].ratio_from_prefab
             names = prefabnamelist[ratio_from_prefab]
           end
-          if names ~= nil then
-            AdjustHealthEnt(names,prefab,inst,settings,ratio_from_prefab)
-          end
-          if call_inst_fn_for_ents[prefab]~=nil then
-            if type(inst[call_inst_fn_for_ents[prefab]])=="function" then
-              inst[call_inst_fn_for_ents[prefab]](inst) -- eg. for merms inst.UpdateDamageAndHealth to adjust max health based on new TUNING values
+          local health = inst.components.health
+          local form = health_forms[prefab]
+          local updatefn = call_inst_fn_for_ents[prefab]
+          if form~=nil and inst[form.flag] then
+            local form_max = settings[form.setting].newmax
+            if health~=nil and not health:IsDead() and health.maxhealth~=form_max then
+              local percent = health:GetPercent()
+              health:SetMaxHealth(form_max, form_health_change)
+              health:SetPercent(percent)
             end
+          elseif updatefn~=nil then
+            if health~=nil and not health:IsDead() and type(inst[updatefn])=="function" then
+              local percent = health:GetPercent()
+              inst[updatefn](inst) -- Vanilla accounts for the king, guards and lunar bonuses.
+              health:SetPercent(percent)
+            end
+          elseif names~=nil then
+            AdjustHealthEnt(names,prefab,inst,settings,ratio_from_prefab)
           end
         end
     end    
@@ -364,9 +419,70 @@ AddPrefabPostInit("world", function(world)
 end)
 
 
+local function ProtectFormMaxHealth(inst, health, form)
+    local Transform = inst[form.transform_method]
+    if type(Transform)~="function" then
+      return
+    end
+
+    local SetMaxHealth = health.SetMaxHealth
+    local transforming = false
+    local function FinishTransform(...)
+      transforming = false
+      return ...
+    end
+    inst[form.transform_method] = function(inst, ...)
+      transforming = true
+      return FinishTransform(Transform(inst, ...))
+    end
+    health.SetMaxHealth = function(health, amount, source)
+      -- Allow the transformation and the mod's rescale. Other writes could reset the active form.
+      if not inst[form.flag] or transforming or source==form_health_change then
+        return SetMaxHealth(health, amount)
+      end
+    end
+end
+
+local function RestoreNormalFormHealthOnLoad(inst, health, form)
+    local OnPreLoad = inst.OnPreLoad
+    if OnPreLoad==nil then
+      return
+    end
+
+    inst.OnPreLoad = function(inst, data, ...)
+      OnPreLoad(inst, data, ...)
+      local saved_health = data and data[form.flag] and not inst[form.flag] and data.health
+      if saved_health and saved_health.maxhealth~=nil and not (form.skip_restore and form.skip_restore(data)) then
+        -- The normal form loaded. Convert the saved fraction before the health component reads it.
+        local normal_health = GLOBAL.shallowcopy(saved_health)
+        if normal_health.health~=nil and normal_health.maxhealth>0 then
+          normal_health.health = normal_health.health / normal_health.maxhealth * health.maxhealth
+        end
+        normal_health.maxhealth = nil
+        data.health = normal_health
+      end
+    end
+end
+
+for prefab,form in pairs(health_forms) do
+    AddPrefabPostInit(prefab, function(inst)
+      local health = inst.components.health
+      if health~=nil then
+        health.save_maxhealth = true
+        if form.transform_method~=nil then
+          ProtectFormMaxHealth(inst, health, form)
+        end
+        if form.restore_normal_health then
+          RestoreNormalFormHealthOnLoad(inst, health, form)
+        end
+      end
+    end)
+end
+
+
 for prefab,name in pairs(prefabnamelist) do -- to solve the wrong current health problem, we also have to save maxhealth for all those prefabs
     AddPrefabPostInit(prefab,function(inst)
-        if inst.components.health~=nil then
+        if inst.components.health~=nil and health_forms[prefab]==nil then
             inst.components.health.save_maxhealth = true -- meanwhile the devs added this value, so instead of wrting my own OnSave, we can simply set this to true.
         end
     end)
